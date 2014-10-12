@@ -12,6 +12,7 @@ class AlembicCommand(Command):
 
         def __call__(self, args):
             self.settings = self.app.settings
+            self.paths = self.app.paths
             self.generate_config()
             self.set_sys_argb(args)
             self.run_alembic()
@@ -19,8 +20,8 @@ class AlembicCommand(Command):
         def generate_config(self):
             config = ConfigParser()
             config['alembic'] = {
-                'script_location': self.settings['alembic:versions'],
-                'sqlalchemy.url': self.settings['db:url'],
+                'script_location': self.paths['alembic']['versions'],
+                'sqlalchemy.url': self.settings['db']['url'],
             }
             config['loggers'] = {
                 'keys': 'root,sqlalchemy,alembic',
@@ -53,7 +54,7 @@ class AlembicCommand(Command):
                 'formatter': 'generic',
             }
 
-            with open(self.settings['alembic:ini'], 'w') as configfile:
+            with open(self.paths['alembic:ini'], 'w') as configfile:
                 config.write(configfile)
                 configfile.write('''[formatter_generic]
     datefmt = %H:%M:%S
@@ -62,9 +63,9 @@ class AlembicCommand(Command):
 
         def set_sys_argb(self, args):
             sys.argv[1] = '-c'
-            sys.argv.insert(2, self.settings['alembic:ini'])
+            sys.argv.insert(2, self.paths['alembic']['ini'])
             if 'init' in sys.argv:
-                sys.argv.append(self.settings['alembic:versions'])
+                sys.argv.append(self.paths['alembic']['versions'])
 
         def run_alembic(self):
             CommandLine().main()
