@@ -8,6 +8,7 @@ import re
 from hatak.command import Command
 
 from haplugin.sql.testing import DatabaseTestCreation
+from haplugin.sql.plugin import SqlPlugin
 
 
 class AlembicCommand(Command):
@@ -95,11 +96,12 @@ class InitDatabase(AlembicCommand):
             __import__(self.app.module),
             ignore=[re.compile('tests$').search])
         print('[Hatak] Initializing database...')
-        db = creator.init_db()
-        if self.settings.get('fixtures', None):
+        plugin = self.app.get_plugin(SqlPlugin)
+        if plugin.fixture:
             print('[Hatak] Creating fixtures...')
-            Fixtures = self.app._import_from_string(self.settings['fixtures'])
-            Fixtures(db, self.app).create_all()
+            db = creator.init_db()
+            plugin.fixture.init_fixture(db, self.app)
+            plugin.fixture.create_all()
 
         alembic_cfg = Config(self.paths['alembic:ini'])
         stamp(alembic_cfg, 'head')
